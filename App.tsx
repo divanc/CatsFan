@@ -5,9 +5,11 @@ import {
   StyleSheet,
   useColorScheme,
 } from 'react-native';
+import {activateAdapty} from './adapty';
 
 let IS_DARK_MODE = false;
 
+activateAdapty();
 function App(): JSX.Element {
   const isDarkMode = useColorScheme() === 'dark';
   IS_DARK_MODE = isDarkMode;
