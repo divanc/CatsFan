@@ -4,6 +4,17 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 export const KEY_TODAY_VIEWS = '@views';
 // When user last swiped a card (timestamp)
 export const KEY_VIEWED_AT = '@viewed_at';
+// Does user have premium
+export const IS_PREMIUM = '@is_premium';
+
+export async function getIsPremium(): Promise<boolean> {
+  const isPremium = await AsyncStorage.getItem(IS_PREMIUM);
+  return isPremium === 'true';
+}
+
+export async function setIsPremium(isPremium: boolean): Promise<void> {
+  await AsyncStorage.setItem(IS_PREMIUM, isPremium.toString());
+}
 
 export async function getTodayViews(): Promise<number> {
   const lastViewTs = await AsyncStorage.getItem(KEY_VIEWED_AT);

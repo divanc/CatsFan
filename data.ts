@@ -1,8 +1,14 @@
-import {useRef, useState} from 'react';
+import {useEffect, useRef, useState} from 'react';
 import {AdaptyPaywall, AdaptyProduct, adapty} from 'react-native-adapty';
 import {fetchImages} from './images';
 import {MY_PAYWALL_ID} from './credentials';
-import {getLastViewedAt, getTodayViews, recordView} from './helpers';
+import {
+  getIsPremium,
+  getLastViewedAt,
+  getTodayViews,
+  recordView,
+  setIsPremium,
+} from './helpers';
 
 type CardInfo =
   | {type: 'image'; id: string; url: string}
@@ -32,11 +38,40 @@ export function useCards(): CardsResult {
   const sessionViews = useRef<number>(0);
   const lastViewedAt = useRef<number | null>(null); // Date timestamp
 
+  useEffect(() => {
+    adapty.addEventListener('onLatestProfileLoad', async profile => {
+      // premium is an access level, that you set in Dashboard -> Product
+      shouldPresentPaywall.current =
+        profile?.accessLevels?.premium?.isActive || false;
+
+      const isPremium = await getIsPremium();
+      if (isPremium !== shouldPresentPaywall.current) {
+        setIsPremium(shouldPresentPaywall.current);
+      }
+    });
+
+    return () => {
+      adapty.removeAllListeners();
+    };
+  }, []);
+
   const init = async () => {
     sessionViews.current = await getTodayViews();
-    console.log('sessionViews.current', sessionViews.current);
     lastViewedAt.current = await getLastViewedAt();
-    console.log('lastViewedAt.current', lastViewedAt.current);
+    shouldPresentPaywall.current = !(await getIsPremium());
+
+    try {
+      // do not await, as it's not critical for the app to work
+      adapty.getProfile().then(profile => {
+        const isSubscribed = profile?.accessLevels?.premium?.isActive || false;
+        if (isSubscribed !== shouldPresentPaywall.current) {
+          setIsPremium(isSubscribed);
+          shouldPresentPaywall.current = isSubscribed;
+        }
+      });
+    } catch (error) {
+      console.error('failed to receive user profile', error);
+    }
 
     await fetchMore();
   };
@@ -82,8 +117,6 @@ export function useCards(): CardsResult {
         products: productsPromise,
       });
     }
-
-    console.log('commiting', newCards);
 
     page.current += 1;
     setCards(newCards);
