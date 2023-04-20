@@ -18,10 +18,10 @@ function App(): JSX.Element {
   const isDarkMode = useColorScheme() === 'dark';
   const styles = useMemo(() => getStyles(isDarkMode), [isDarkMode]);
 
-  const {cards, fetchMore, removeCard} = useCards();
+  const {cards, init, removeCard} = useCards();
 
   useEffect(() => {
-    fetchMore(); // fetch initial cards
+    init(); // fetch initial cards
   }, []);
 
   return (
@@ -40,7 +40,8 @@ function App(): JSX.Element {
                 <CardPaywall
                   key={card.id}
                   onSwipeCompleted={() => {}}
-                  paywallId={card.paywallId}
+                  paywall={card.paywall}
+                  products={card.products}
                 />
               );
             case 'image':

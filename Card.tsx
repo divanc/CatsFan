@@ -1,4 +1,4 @@
-import React, {PropsWithChildren, useMemo} from 'react';
+import React, {ForwardedRef, PropsWithChildren, useMemo} from 'react';
 import {StyleSheet, View, useColorScheme} from 'react-native';
 import TinderCard from 'react-tinder-card';
 
@@ -6,28 +6,44 @@ type CardProps = PropsWithChildren<{
   onSwipeCompleted?: (direction: string) => void;
   onLeftScreen?: (id: string) => void;
   preventSwipe?: string[];
+  synthetic?: boolean;
 }>;
 
 export const CARD_RADIUS = 12;
 
-export function Card({
-  children,
-  preventSwipe = ['top', 'bottom'],
-  onSwipeCompleted = () => undefined,
-  onLeftScreen = () => undefined,
-}: CardProps): JSX.Element {
-  const isDarkMode = useColorScheme() === 'dark';
-  const styles = useMemo(() => getStyles(isDarkMode), [isDarkMode]);
+export const Card = React.forwardRef<any, CardProps>(
+  (
+    {
+      children,
+      preventSwipe = ['up', 'down'],
+      onSwipeCompleted = () => undefined,
+      onLeftScreen = () => undefined,
+      synthetic = false,
+    }: CardProps,
+    ref: ForwardedRef<any>,
+  ) => {
+    const isDarkMode = useColorScheme() === 'dark';
+    const styles = useMemo(() => getStyles(isDarkMode), [isDarkMode]);
 
-  return (
-    <TinderCard
-      onSwipe={onSwipeCompleted}
-      onCardLeftScreen={onLeftScreen}
-      preventSwipe={preventSwipe}>
-      <View style={styles.container}>{children}</View>
-    </TinderCard>
-  );
-}
+    // if synthetic, we don't want to use the tinder card,
+    // as it will cause issues with the pressables
+    if (synthetic) {
+      return (
+        <View style={{...styles.container, marginLeft: 12}}>{children}</View>
+      );
+    }
+
+    return (
+      <TinderCard
+        ref={ref}
+        onSwipe={onSwipeCompleted}
+        onCardLeftScreen={onLeftScreen}
+        preventSwipe={preventSwipe}>
+        <View style={styles.container}>{children}</View>
+      </TinderCard>
+    );
+  },
+);
 
 function getStyles(dark: boolean) {
   return StyleSheet.create({
